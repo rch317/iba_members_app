@@ -4,11 +4,11 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "256",
   "memory": "512",
-  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::522921482914:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
       "name": "iba-membership",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/iba-membership:latest",
+      "image": "522921482914.dkr.ecr.us-east-1.amazonaws.com/iba-membership:latest",
       "essential": true,
       "portMappings": [
         {
@@ -21,17 +21,17 @@
         { "name": "PORT",      "value": "8080" }
       ],
       "secrets": [
-        { "name": "MONGO_URI",            "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:MONGO_URI::" },
-        { "name": "GOOGLE_CLIENT_ID",     "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:GOOGLE_CLIENT_ID::" },
-        { "name": "GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:GOOGLE_CLIENT_SECRET::" },
-        { "name": "GOOGLE_CALLBACK_URL",  "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:GOOGLE_CALLBACK_URL::" },
-        { "name": "SESSION_SECRET",       "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:SESSION_SECRET::" }
+        { "name": "MONGO_URI",            "valueFrom": "arn:aws:secretsmanager:us-east-1:522921482914:secret:iba-membership:MONGO_URI::" },
+        { "name": "GOOGLE_CLIENT_ID",     "valueFrom": "arn:aws:secretsmanager:us-east-1:522921482914:secret:iba-membership:GOOGLE_CLIENT_ID::" },
+        { "name": "GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:us-east-1:522921482914:secret:iba-membership:GOOGLE_CLIENT_SECRET::" },
+        { "name": "GOOGLE_CALLBACK_URL",  "valueFrom": "arn:aws:secretsmanager:us-east-1:522921482914:secret:iba-membership:GOOGLE_CALLBACK_URL::" },
+        { "name": "SESSION_SECRET",       "valueFrom": "arn:aws:secretsmanager:us-east-1:522921482914:secret:iba-membership:SESSION_SECRET::" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group":         "/ecs/iba-membership",
-          "awslogs-region":        "REGION",
+          "awslogs-region":        "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
       },
