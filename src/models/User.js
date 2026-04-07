@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const crypto   = require('crypto');
 
 const userSchema = new mongoose.Schema({
-  googleId:    { type: String, required: true, unique: true },
+  googleId:    { type: String, unique: true, sparse: true },
   email:       { type: String, required: true, unique: true },
   displayName: { type: String, default: '' },
   apiKey:      { type: String, unique: true, sparse: true },

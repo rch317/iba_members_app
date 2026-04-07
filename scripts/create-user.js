@@ -42,9 +42,8 @@ async function main() {
   }
 
   if (generateApiKey) {
-    user.generateApiKey();
-    await user.save();
-    console.log(`API key: ${user.apiKey}`);
+    const key = await user.generateApiKey();
+    console.log(`API key: ${key}`);
     console.log('Include this in requests as:  X-API-Key: <key>');
   }
 
