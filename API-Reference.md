@@ -26,6 +26,8 @@ List members with optional filtering, sorting, and pagination.
 | `recurringMember` | boolean | — | Filter by `true` or `false` |
 | `membership_list` | boolean | — | Filter by `true` or `false` |
 | `mailing_list` | boolean | — | Filter by `true` or `false` |
+| `renewalDate_gte` | string | — | Pass `today` to return only active (not expired) members |
+| `renewalDate_lt` | string | — | Pass `today` to return only expired members |
 | `sortField` | string | `lastName` | Sort field: `lastName`, `firstName`, `emailAddress`, `city`, `state`, `recurringMember`, `renewalDate` |
 | `sortDir` | number | `1` | `1` = ascending, `-1` = descending |
 
@@ -71,13 +73,21 @@ Summary counts across the full member collection.
 **Response**
 ```json
 {
-  "total": 50,
-  "recurring": 30,
-  "membershipList": 40,
-  "mailingList": 35,
-  "emailNews": 28
+  "total": 790,
+  "activeMembers": 178,
+  "recurring": 300,
+  "membershipList": 400,
+  "mailingList": 350,
+  "emailNews": 280
 }
 ```
+
+---
+
+### `GET /api/members/active`
+Paginated, sortable list of members whose `renewalDate >= today`. Accepts the same `page`, `limit`, `sortField`, and `sortDir` params as `GET /api/members`.
+
+**Response** — same shape as `GET /api/members`.
 
 ---
 
@@ -246,3 +256,27 @@ Delete a group permanently.
 { "message": "Satellite group deleted" }
 ```
 Returns `404` if not found.
+
+---
+
+## Health
+
+### `GET /health`
+Returns application and database status. Returns HTTP `200` when healthy, `503` when the database is not connected.
+
+**Response**
+```json
+{
+  "status": "ok",
+  "db": "connected",
+  "uptime": 3600,
+  "timestamp": "2026-04-07T19:33:20.947Z"
+}
+```
+
+| Field | Values |
+|---|---|
+| `status` | `ok` or `degraded` |
+| `db` | `connected`, `connecting`, `disconnected`, `disconnecting` |
+| `uptime` | Process uptime in seconds |
+| `timestamp` | Current server time (ISO 8601) |
