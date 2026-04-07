@@ -10,13 +10,18 @@
     "seed:groups": "node scripts/seed-satellite-groups.js",
     "import:sheets": "node scripts/import-from-sheets.js",
     "import:sheets:dry": "node scripts/import-from-sheets.js --dry-run",
-    "import:sheets:overwrite": "node scripts/import-from-sheets.js --overwrite"
+    "import:sheets:overwrite": "node scripts/import-from-sheets.js --overwrite",
+    "create-user": "node scripts/create-user.js"
   },
   "dependencies": {
+    "connect-mongo": "^6.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-session": "^1.19.0",
     "googleapis": "^171.4.0",
-    "mongoose": "^8.4.1"
+    "mongoose": "^8.4.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.3"

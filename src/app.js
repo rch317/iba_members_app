@@ -1,13 +1,49 @@
-const express = require('express');
-const path = require('path');
-const mongoose = require('mongoose');
-const membersRouter = require('./routes/api/members');
+const express    = require('express');
+const path       = require('path');
+const session    = require('express-session');
+const { MongoStore } = require('connect-mongo');
+const mongoose   = require('mongoose');
+const passport   = require('./config/passport');
+const { requireAuth } = require('./middleware/requireAuth');
+const membersRouter         = require('./routes/api/members');
 const satelliteGroupsRouter = require('./routes/api/satelliteGroups');
-const adminRouter = require('./routes/admin/dashboard');
+const adminRouter           = require('./routes/admin/dashboard');
+const authRouter            = require('./routes/auth');
 
 const app = express();
 
 app.use(express.json());
+
+// Sessions — stored in MongoDB so they survive restarts
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'change-me-in-production',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI || 'mongodb://db:27017/membership',
+    collectionName: 'iba_sessions',
+    ttl: 60 * 60 * 24 * 7, // 7 days
+  }),
+  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 24 * 7 },
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Auth routes (must be before requireAuth)
+app.use('/auth', authRouter);
+
+// Login page
+app.get('/login', (req, res) => {
+  if (req.isAuthenticated()) return res.redirect('/admin');
+  res.sendFile(path.join(__dirname, '../public/login.html'));
+});
+
+// Apply auth to everything below this line
+app.use(requireAuth);
+
+// Static files — served after auth so /admin/* requires login
+// (login.html, auth routes, and health are whitelisted in requireAuth)
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Health check
