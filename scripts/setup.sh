@@ -13,7 +13,7 @@ set -euo pipefail
 
 REPO_URL="git@github.com:rch317/iba_members_app.git"
 APP_DIR="/home/ec2-user/app"
-NODE_VERSION="24"
+NODE_VERSION="18"
 APP_PORT="3001"
 
 echo "================================================================"
