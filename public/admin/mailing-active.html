@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Active Mailing List</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #222; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; }
+    header h1 { font-size: 1.25rem; }
+    nav { background: #16213e; display: flex; gap: .25rem; padding: .5rem 2rem; }
+    nav a { color: #aab4c8; text-decoration: none; padding: .4rem .9rem; border-radius: 5px; font-size: .88rem; }
+    nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
+    nav a.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 600; }
+    .toolbar { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 2rem 1rem; flex-wrap: wrap; }
+    .table-wrap { overflow-x: auto; margin: 0 2rem 1rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th { background: #1a1a2e; color: #fff; text-align: left; padding: .6rem 1rem; font-size: .78rem; text-transform: uppercase; white-space: nowrap; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background: #2e2e5e; }
+    th.sort-asc::after  { content: ' \25B2'; font-size: .65rem; }
+    th.sort-desc::after { content: ' \25BC'; font-size: .65rem; }
+    td { padding: .55rem 1rem; border-bottom: 1px solid #f0f0f0; font-size: .88rem; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+  </style>
+</head>
+<body>
+<header><h1>Membership Admin</h1></header>
+<nav>
+  <a href="/admin">Members</a>
+  <a href="/admin/satellite-groups">Satellite Groups</a>
+  <a href="/admin/mailing-active" class="active">Active Mailing List</a>
+</nav>
+
+<div class="toolbar">
+  <span style="font-size:.95rem;font-weight:600;color:#444" id="member-count"></span>
+  <small style="color:#666;margin-left:.5rem">Members with <strong>mailing list = on</strong> and <strong>renewal date in the future</strong></small>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="sortable" onclick="setSort('lastName')">Last Name</th>
+        <th class="sortable" onclick="setSort('firstName')">First Name</th>
+        <th>Address</th>
+        <th class="sortable" onclick="setSort('city')">City</th>
+        <th class="sortable" onclick="setSort('state')">State</th>
+        <th>ZIP</th>
+      </tr>
+    </thead>
+    <tbody id="member-tbody"></tbody>
+  </table>
+</div>
+
+<script>
+  let sortField = 'lastName';
+  let sortDir   = 1;
+  let members   = [];
+
+  function esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function setSort(field) {
+    if (sortField === field) { sortDir = sortDir === 1 ? -1 : 1; }
+    else { sortField = field; sortDir = 1; }
+    updateSortHeaders();
+    renderTable();
+  }
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('sort-asc','sort-desc');
+      const field = th.getAttribute('onclick').replace("setSort('","").replace("')","");
+      if (field === sortField) th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    });
+  }
+
+  function renderTable() {
+    const sorted = [...members].sort((a, b) => {
+      const av = String(a[sortField] ?? '').toLowerCase();
+      const bv = String(b[sortField] ?? '').toLowerCase();
+      return av < bv ? -sortDir : av > bv ? sortDir : 0;
+    });
+
+    document.getElementById('member-tbody').innerHTML = sorted.map(m => `
+      <tr>
+        <td>${esc(m.lastName)}</td>
+        <td>${esc(m.firstName)}</td>
+        <td>${esc(m.addressLine1)}${m.addressLine2 ? '<br><small>'+esc(m.addressLine2)+'</small>' : ''}</td>
+        <td>${esc(m.city)}</td>
+        <td>${esc(m.state)}</td>
+        <td>${esc(m.postalZip)}</td>
+      </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:1.5rem">No active mailing list members found</td></tr>';
+  }
+
+  async function loadMembers() {
+    const res  = await fetch('/api/members/mailing-active');
+    const data = await res.json();
+    members = data.members;
+    document.getElementById('member-count').textContent = `${data.total} member${data.total !== 1 ? 's' : ''}`;
+    updateSortHeaders();
+    renderTable();
+  }
+
+  loadMembers();
+</script>
+</body>
+</html>
