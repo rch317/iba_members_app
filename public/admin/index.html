@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Membership Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #222; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; }
+    header h1 { font-size: 1.25rem; }
+    nav { background: #16213e; display: flex; gap: .25rem; padding: .5rem 2rem; }
+    nav a { color: #aab4c8; text-decoration: none; padding: .4rem .9rem; border-radius: 5px; font-size: .88rem; }
+    nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
+    nav a.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 600; }
+    .stats { display: flex; gap: 1rem; padding: 1.5rem 2rem; flex-wrap: wrap; }
+    .stat-card { background: #fff; border-radius: 8px; padding: 1rem 1.5rem; min-width: 140px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .stat-card .label { font-size: .75rem; color: #666; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card .value { font-size: 2rem; font-weight: 700; margin-top: .25rem; }
+    .toolbar { display: flex; align-items: center; gap: .75rem; padding: 0 2rem 1rem; flex-wrap: wrap; }
+    .toolbar select, .toolbar button { padding: .45rem .75rem; border-radius: 6px; border: 1px solid #ccc; font-size: .9rem; }
+    .toolbar button { background: #1a1a2e; color: #fff; border-color: #1a1a2e; cursor: pointer; }
+    .toolbar button:hover { background: #2e2e5e; }
+    .table-wrap { overflow-x: auto; margin: 0 2rem 1rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th { background: #1a1a2e; color: #fff; text-align: left; padding: .6rem 1rem; font-size: .78rem; text-transform: uppercase; white-space: nowrap; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background: #2e2e5e; }
+    th.sort-asc::after  { content: ' \25B2'; font-size: .65rem; }
+    th.sort-desc::after { content: ' \25BC'; font-size: .65rem; }
+    td { padding: .55rem 1rem; border-bottom: 1px solid #f0f0f0; font-size: .88rem; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    .check { color: #388e3c; font-weight: 700; }
+    .cross { color: #bbb; }
+    .actions button { background: none; border: none; cursor: pointer; font-size: .85rem; color: #1565c0; margin-right: .5rem; }
+    .actions button.del { color: #c62828; }
+    .pagination { display: flex; gap: .5rem; padding: 0 2rem 2rem; align-items: center; }
+    .pagination button { padding: .35rem .75rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .pagination span { font-size: .9rem; color: #555; }
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 10; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 2rem 1rem; }
+    .modal-backdrop.open { display: flex; }
+    .modal { background: #fff; border-radius: 10px; padding: 2rem; width: 560px; max-width: 100%; margin: auto; }
+    .modal h2 { margin-bottom: 1.25rem; font-size: 1.1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1rem; }
+    .form-grid .span2 { grid-column: span 2; }
+    .modal label { display: flex; flex-direction: column; gap: .25rem; font-size: .88rem; }
+    .modal label span { font-weight: 600; }
+    .modal input[type="text"], .modal input[type="email"], .modal input[type="date"] {
+      padding: .42rem .6rem; border: 1px solid #ccc; border-radius: 6px; font-size: .9rem; width: 100%;
+    }
+    .checks { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; margin-top: .25rem; }
+    .checks label { flex-direction: row; align-items: center; gap: .35rem; font-weight: normal; font-size: .88rem; }
+    .checks input[type="checkbox"] { width: 15px; height: 15px; }
+    .modal .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .modal .modal-actions button { padding: .45rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-size: .9rem; }
+    .btn-cancel { background: #f0f0f0; }
+    .btn-save   { background: #1a1a2e; color: #fff; }
+  </style>
+</head>
+<body>
+<header><h1>Membership Admin</h1></header>
+<nav>
+  <a href="/admin" class="active">Members</a>
+  <a href="/admin/satellite-groups">Satellite Groups</a>
+</nav>
+
+<div class="stats">
+  <div class="stat-card"><div class="label">Total Members</div><div class="value" id="stat-total">—</div></div>
+  <div class="stat-card"><div class="label">Recurring</div><div class="value" id="stat-recurring">—</div></div>
+  <div class="stat-card"><div class="label">Membership List</div><div class="value" id="stat-membership">—</div></div>
+  <div class="stat-card"><div class="label">Mailing List</div><div class="value" id="stat-mailing">—</div></div>
+  <div class="stat-card"><div class="label">Email News</div><div class="value" id="stat-email-news">—</div></div>
+</div>
+
+<div class="toolbar">
+  <select id="filter-recurring">
+    <option value="">All members</option>
+    <option value="true">Recurring only</option>
+    <option value="false">Non-recurring only</option>
+  </select>
+  <select id="filter-membership">
+    <option value="">Any membership list</option>
+    <option value="true">On membership list</option>
+    <option value="false">Not on membership list</option>
+  </select>
+  <select id="filter-mailing">
+    <option value="">Any mailing list</option>
+    <option value="true">On mailing list</option>
+    <option value="false">Not on mailing list</option>
+  </select>
+  <button onclick="applyFilters()">Filter</button>
+  <button onclick="openCreateModal()" style="margin-left:auto">+ Add Member</button>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="sortable" onclick="setSort('lastName')">Last Name</th>
+        <th class="sortable" onclick="setSort('firstName')">First Name</th>
+        <th class="sortable" onclick="setSort('emailAddress')">Email</th>
+        <th>Primary Phone</th>
+        <th class="sortable" onclick="setSort('city')">City</th>
+        <th class="sortable" onclick="setSort('state')">State</th>
+        <th class="sortable" onclick="setSort('recurringMember')">Recurring</th>
+        <th class="sortable" onclick="setSort('renewalDate')">Renewal Date</th>
+        <th>Mbr List</th><th>Mail List</th><th>Email News</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="member-tbody"></tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <button id="btn-prev" onclick="goPage(-1)">&#8592; Prev</button>
+  <span id="page-info"></span>
+  <button id="btn-next" onclick="goPage(1)">Next &#8594;</button>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h2 id="modal-title">Add Member</h2>
+    <form id="member-form" onsubmit="submitForm(event)">
+      <input type="hidden" id="form-id" />
+      <div class="form-grid">
+        <label><span>First Name *</span><input type="text" id="form-firstName" required /></label>
+        <label><span>Last Name *</span><input type="text" id="form-lastName" required /></label>
+        <label class="span2"><span>Address Line 1</span><input type="text" id="form-addressLine1" /></label>
+        <label class="span2"><span>Address Line 2</span><input type="text" id="form-addressLine2" /></label>
+        <label><span>City</span><input type="text" id="form-city" /></label>
+        <label><span>State</span><input type="text" id="form-state" /></label>
+        <label><span>Postal / ZIP</span><input type="text" id="form-postalZip" /></label>
+        <label><span>Satellite Home</span><input type="text" id="form-satelliteHome" /></label>
+        <label><span>Primary Phone</span><input type="text" id="form-primaryPhone" /></label>
+        <label><span>Secondary Phone</span><input type="text" id="form-secondaryPhone" /></label>
+        <label><span>Tertiary Phone</span><input type="text" id="form-tertiaryPhone" /></label>
+        <label><span>Email Address</span><input type="email" id="form-emailAddress" /></label>
+        <label><span>Renewal Date</span><input type="date" id="form-renewalDate" /></label>
+        <div></div>
+        <div class="span2">
+          <div class="checks">
+            <label><input type="checkbox" id="form-recurringMember" /><span>Recurring Member</span></label>
+            <label><input type="checkbox" id="form-membership_list" /><span>Membership List</span></label>
+            <label><input type="checkbox" id="form-mailing_list" /><span>Mailing List</span></label>
+            <label><input type="checkbox" id="form-email_news" /><span>Email News</span></label>
+            <label><input type="checkbox" id="form-hide_email" /><span>Hide Email</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let currentPage = 1;
+  const LIMIT = 20;
+  let currentFilters = {};
+  let sortField = 'lastName';
+  let sortDir   = 1;
+
+  async function loadStats() {
+    const res = await fetch('/api/members/stats');
+    const d = await res.json();
+    document.getElementById('stat-total').textContent     = d.total;
+    document.getElementById('stat-recurring').textContent = d.recurring;
+    document.getElementById('stat-membership').textContent = d.membershipList;
+    document.getElementById('stat-mailing').textContent   = d.mailingList;
+    document.getElementById('stat-email-news').textContent = d.emailNews;
+  }
+
+  function setSort(field) {
+    if (sortField === field) { sortDir = sortDir === 1 ? -1 : 1; }
+    else { sortField = field; sortDir = 1; }
+    currentPage = 1;
+    updateSortHeaders();
+    loadMembers();
+  }
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('sort-asc','sort-desc');
+      const field = th.getAttribute('onclick').replace("setSort('","").replace("')","");
+      if (field === sortField) th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    });
+  }
+
+  async function loadMembers() {
+    const params = new URLSearchParams({ page: currentPage, limit: LIMIT, sortField, sortDir, ...currentFilters });
+    const res = await fetch('/api/members?' + params);
+    const data = await res.json();
+    const tbody = document.getElementById('member-tbody');
+    const bool = (v) => v ? '<span class="check">&#10003;</span>' : '<span class="cross">—</span>';
+    tbody.innerHTML = data.members.map(m => `
+      <tr>
+        <td>${esc(m.lastName)}</td>
+        <td>${esc(m.firstName)}</td>
+        <td>${esc(m.emailAddress)}</td>
+        <td>${esc(m.primaryPhone)}</td>
+        <td>${esc(m.city)}</td>
+        <td>${esc(m.state)}</td>
+        <td>${bool(m.recurringMember)}</td>
+        <td>${m.renewalDate ? new Date(m.renewalDate).toLocaleDateString() : '—'}</td>
+        <td>${bool(m.membership_list)}</td>
+        <td>${bool(m.mailing_list)}</td>
+        <td>${bool(m.email_news)}</td>
+        <td class="actions">
+          <button onclick="openEditModal(${JSON.stringify(m).replaceAll('"', '&quot;')})">Edit</button>
+          <button class="del" onclick="deleteMember('${m._id}', '${esc(m.firstName)} ${esc(m.lastName)}')">Delete</button>
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="12" style="text-align:center;color:#999;padding:1.5rem">No members found</td></tr>';
+
+    const totalPages = Math.ceil(data.total / LIMIT) || 1;
+    document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages} (${data.total} total)`;
+    document.getElementById('btn-prev').disabled = currentPage <= 1;
+    document.getElementById('btn-next').disabled = currentPage >= totalPages;
+  }
+
+  function esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function applyFilters() {
+    currentFilters = {};
+    const r = document.getElementById('filter-recurring').value;
+    const m = document.getElementById('filter-membership').value;
+    const ml = document.getElementById('filter-mailing').value;
+    if (r  !== '') currentFilters.recurringMember = r;
+    if (m  !== '') currentFilters.membership_list  = m;
+    if (ml !== '') currentFilters.mailing_list     = ml;
+    currentPage = 1;
+    loadMembers();
+  }
+
+  function goPage(delta) { currentPage += delta; loadMembers(); }
+
+  const TEXT_FIELDS = ['firstName','lastName','addressLine1','addressLine2','city','state',
+    'postalZip','satelliteHome','primaryPhone','secondaryPhone','tertiaryPhone'];
+  const CHECK_FIELDS = ['recurringMember','membership_list','mailing_list','email_news','hide_email'];
+
+  function openCreateModal() {
+    document.getElementById('modal-title').textContent = 'Add Member';
+    document.getElementById('member-form').reset();
+    document.getElementById('form-id').value = '';
+    document.getElementById('modal-backdrop').classList.add('open');
+  }
+
+  function openEditModal(m) {
+    document.getElementById('modal-title').textContent = 'Edit Member';
+    document.getElementById('form-id').value = m._id;
+    TEXT_FIELDS.forEach(f => { document.getElementById('form-' + f).value = m[f] ?? ''; });
+    document.getElementById('form-emailAddress').value = m.emailAddress ?? '';
+    document.getElementById('form-renewalDate').value = m.renewalDate
+      ? new Date(m.renewalDate).toISOString().slice(0,10) : '';
+    CHECK_FIELDS.forEach(f => { document.getElementById('form-' + f).checked = !!m[f]; });
+    document.getElementById('modal-backdrop').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('modal-backdrop').classList.remove('open'); }
+
+  async function submitForm(e) {
+    e.preventDefault();
+    const id = document.getElementById('form-id').value;
+    const body = {};
+    TEXT_FIELDS.forEach(f => { body[f] = document.getElementById('form-' + f).value; });
+    body.emailAddress = document.getElementById('form-emailAddress').value;
+    body.renewalDate  = document.getElementById('form-renewalDate').value || null;
+    CHECK_FIELDS.forEach(f => { body[f] = document.getElementById('form-' + f).checked; });
+
+    const url    = id ? `/api/members/${id}` : '/api/members';
+    const method = id ? 'PATCH' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) { const err = await res.json(); alert(err.error); return; }
+    closeModal();
+    loadStats();
+    loadMembers();
+  }
+
+  async function deleteMember(id, name) {
+    if (!confirm(`Delete member "${name}"?`)) return;
+    await fetch(`/api/members/${id}`, { method: 'DELETE' });
+    loadStats();
+    loadMembers();
+  }
+
+  updateSortHeaders();
+  loadStats();
+  loadMembers();
+</script>
+</body>
+</html>

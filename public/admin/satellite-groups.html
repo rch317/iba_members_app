@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Satellite Groups Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #222; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; }
+    header h1 { font-size: 1.25rem; }
+    nav { background: #16213e; display: flex; gap: .25rem; padding: .5rem 2rem; }
+    nav a { color: #aab4c8; text-decoration: none; padding: .4rem .9rem; border-radius: 5px; font-size: .88rem; }
+    nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
+    nav a.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 600; }
+    .toolbar { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 2rem 1rem; flex-wrap: wrap; }
+    .toolbar button { padding: .45rem .75rem; border-radius: 6px; border: none; font-size: .9rem; background: #1a1a2e; color: #fff; cursor: pointer; }
+    .toolbar button:hover { background: #2e2e5e; }
+    .table-wrap { overflow-x: auto; margin: 0 2rem 1rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th { background: #1a1a2e; color: #fff; text-align: left; padding: .6rem 1rem; font-size: .78rem; text-transform: uppercase; white-space: nowrap; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background: #2e2e5e; }
+    th.sort-asc::after  { content: ' \25B2'; font-size: .65rem; }
+    th.sort-desc::after { content: ' \25BC'; font-size: .65rem; }
+    td { padding: .55rem 1rem; border-bottom: 1px solid #f0f0f0; font-size: .88rem; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    .actions button { background: none; border: none; cursor: pointer; font-size: .85rem; color: #1565c0; margin-right: .5rem; }
+    .actions button.del { color: #c62828; }
+    .pagination { display: flex; gap: .5rem; padding: 0 2rem 2rem; align-items: center; }
+    .pagination button { padding: .35rem .75rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .pagination span { font-size: .9rem; color: #555; }
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 10; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 2rem 1rem; }
+    .modal-backdrop.open { display: flex; }
+    .modal { background: #fff; border-radius: 10px; padding: 2rem; width: 560px; max-width: 100%; margin: auto; }
+    .modal h2 { margin-bottom: 1.25rem; font-size: 1.1rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1rem; }
+    .form-grid .span2 { grid-column: span 2; }
+    .modal label { display: flex; flex-direction: column; gap: .25rem; font-size: .88rem; }
+    .modal label > span { font-weight: 600; }
+    .modal input[type="text"] { padding: .42rem .6rem; border: 1px solid #ccc; border-radius: 6px; font-size: .9rem; width: 100%; }
+    .field-label { font-weight: 600; font-size: .88rem; margin-bottom: .25rem; }
+    .member-search { position: relative; }
+    .selected-badge { display: flex; align-items: center; gap: .4rem; background: #e8f0fe; border: 1px solid #c5d5f5; border-radius: 6px; padding: .32rem .6rem; font-size: .88rem; margin-bottom: .3rem; min-height: 32px; }
+    .selected-badge span { flex: 1; }
+    .selected-badge button { background: none; border: none; cursor: pointer; color: #c62828; font-size: 1rem; line-height: 1; padding: 0 .1rem; }
+    .search-input { width: 100%; }
+    .search-results { position: absolute; z-index: 20; background: #fff; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,.12); max-height: 200px; overflow-y: auto; display: none; }
+    .search-results.open { display: block; }
+    .search-results li { list-style: none; padding: .45rem .75rem; cursor: pointer; font-size: .88rem; }
+    .search-results li:hover { background: #f0f4ff; }
+    .search-results li.no-results { color: #999; cursor: default; }
+    .modal .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
+    .modal .modal-actions button { padding: .45rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-size: .9rem; }
+    .btn-cancel { background: #f0f0f0; }
+    .btn-save   { background: #1a1a2e; color: #fff; }
+    .flyout-backdrop { display: none; position: fixed; inset: 0; z-index: 30; }
+    .flyout-backdrop.open { display: block; }
+    .flyout { position: fixed; top: 0; right: 0; height: 100%; width: 360px; max-width: 95vw; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,.15); z-index: 31; transform: translateX(100%); transition: transform .25s ease; overflow-y: auto; display: flex; flex-direction: column; }
+    .flyout.open { transform: translateX(0); }
+    .flyout-header { background: #1a1a2e; color: #fff; padding: 1rem 1.25rem; display: flex; align-items: center; gap: .75rem; }
+    .flyout-header h3 { flex: 1; font-size: 1rem; margin: 0; }
+    .flyout-header button { background: none; border: none; color: #fff; font-size: 1.25rem; cursor: pointer; line-height: 1; }
+    .flyout-body { padding: 1.25rem; flex: 1; }
+    .flyout-section { margin-bottom: 1.25rem; }
+    .flyout-section h4 { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #888; border-bottom: 1px solid #eee; padding-bottom: .3rem; margin-bottom: .6rem; }
+    .flyout-row { display: flex; gap: .5rem; margin-bottom: .4rem; font-size: .88rem; }
+    .flyout-row .lbl { color: #666; min-width: 120px; flex-shrink: 0; }
+    .flyout-row .val { font-weight: 500; word-break: break-word; }
+    .contact-link { background: none; border: none; color: #1565c0; cursor: pointer; font-size: inherit; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+    .contact-link:hover { color: #0d47a1; }
+  </style>
+</head>
+<body>
+<header><h1>Membership Admin</h1></header>
+<nav>
+  <a href="/admin">Members</a>
+  <a href="/admin/satellite-groups" class="active">Satellite Groups</a>
+</nav>
+
+<div class="toolbar">
+  <span style="font-size:.95rem;font-weight:600;color:#444" id="group-count"></span>
+  <button onclick="openCreateModal()" style="margin-left:auto">+ Add Group</button>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="sortable" onclick="setSort('groupName')">Group Name</th>
+        <th>Address</th>
+        <th class="sortable" onclick="setSort('city')">City</th>
+        <th class="sortable" onclick="setSort('state')">State</th>
+        <th>ZIP</th>
+        <th>Primary Contact</th><th>Secondary Contact</th><th>Tertiary Contact</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="group-tbody"></tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <button id="btn-prev" onclick="goPage(-1)">&#8592; Prev</button>
+  <span id="page-info"></span>
+  <button id="btn-next" onclick="goPage(1)">Next &#8594;</button>
+</div>
+
+<!-- Member detail flyout -->
+<div class="flyout-backdrop" id="flyout-backdrop" onclick="closeFlyout()"></div>
+<div class="flyout" id="member-flyout">
+  <div class="flyout-header">
+    <h3 id="flyout-name">Member Detail</h3>
+    <button onclick="closeFlyout()" title="Close">&#10005;</button>
+  </div>
+  <div class="flyout-body" id="flyout-body"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="onBackdropClick(event)">
+  <div class="modal">
+    <h2 id="modal-title">Add Satellite Group</h2>
+    <form id="group-form" onsubmit="submitForm(event)">
+      <input type="hidden" id="form-id" />
+      <div class="form-grid">
+        <label class="span2"><span>Group Name *</span><input type="text" id="form-groupName" required /></label>
+        <label class="span2"><span>Address Line 1</span><input type="text" id="form-addressLine1" /></label>
+        <label class="span2"><span>Address Line 2</span><input type="text" id="form-addressLine2" /></label>
+        <label><span>City</span><input type="text" id="form-city" /></label>
+        <label><span>State</span><input type="text" id="form-state" /></label>
+        <label><span>Postal / ZIP</span><input type="text" id="form-postalZip" /></label>
+        <div></div>
+        <div class="span2"><div class="field-label">Primary Contact</div><div class="member-search" id="widget-primaryContact"></div></div>
+        <div class="span2"><div class="field-label">Secondary Contact</div><div class="member-search" id="widget-secondaryContact"></div></div>
+        <div class="span2"><div class="field-label">Tertiary Contact</div><div class="member-search" id="widget-tertiaryContact"></div></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-save">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  let currentPage = 1;
+  const LIMIT = 20;
+  const REF_FIELDS = ['primaryContact','secondaryContact','tertiaryContact'];
+  const TEXT_FIELDS = ['groupName','addressLine1','addressLine2','city','state','postalZip'];
+  const widgetState = { primaryContact:{id:null,name:''}, secondaryContact:{id:null,name:''}, tertiaryContact:{id:null,name:''} };
+  const searchTimers = {};
+  let sortField = 'groupName';
+  let sortDir   = 1;
+
+  function esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Widget ────────────────────────────────────────────────────────────────
+  function buildWidget(field) {
+    document.getElementById('widget-' + field).innerHTML =
+      `<div class="selected-badge" id="badge-${field}" style="display:none">
+         <span id="badge-name-${field}"></span>
+         <button type="button" title="Clear" onclick="clearContact('${field}')">&#10005;</button>
+       </div>
+       <input type="text" class="search-input" id="search-${field}"
+              placeholder="Type a name to search&hellip;" autocomplete="off"
+              oninput="onSearch('${field}',this.value)"
+              onfocus="onSearch('${field}',this.value)" />
+       <ul class="search-results" id="results-${field}"></ul>`;
+  }
+
+  function setContact(field, id, name) {
+    widgetState[field] = { id, name };
+    document.getElementById('badge-name-' + field).textContent = name;
+    document.getElementById('badge-' + field).style.display = 'flex';
+    document.getElementById('search-' + field).value = '';
+    document.getElementById('search-' + field).placeholder = 'Change\u2026';
+    closeResults(field);
+  }
+
+  function clearContact(field) {
+    widgetState[field] = { id:null, name:'' };
+    document.getElementById('badge-' + field).style.display = 'none';
+    document.getElementById('search-' + field).value = '';
+    document.getElementById('search-' + field).placeholder = 'Type a name to search\u2026';
+  }
+
+  function closeResults(field) {
+    document.getElementById('results-' + field).classList.remove('open');
+  }
+
+  function onSearch(field, q) {
+    clearTimeout(searchTimers[field]);
+    if (!q.trim()) { closeResults(field); return; }
+    searchTimers[field] = setTimeout(async () => {
+      const res  = await fetch('/api/members/search?q=' + encodeURIComponent(q));
+      const data = await res.json();
+      const ul   = document.getElementById('results-' + field);
+      ul.innerHTML = data.length
+        ? data.map(m =>
+            `<li data-id="${m._id}" data-name="${esc(m.lastName+', '+m.firstName)}" data-field="${field}" onmousedown="pickContact(event)">`
+            + `${esc(m.lastName)}, ${esc(m.firstName)}`
+            + (m.primaryPhone ? ` &mdash; ${esc(m.primaryPhone)}` : '')
+            + `</li>`
+          ).join('')
+        : '<li class="no-results">No members found</li>';
+      ul.classList.add('open');
+    }, 200);
+  }
+
+  function pickContact(e) {
+    const li = e.currentTarget;
+    setContact(li.dataset.field, li.dataset.id, li.dataset.name);
+  }
+
+  document.addEventListener('click', e => {
+    REF_FIELDS.forEach(f => {
+      const w = document.getElementById('widget-' + f);
+      if (w && !w.contains(e.target)) closeResults(f);
+    });
+  });
+
+  // ── Table ─────────────────────────────────────────────────────────────────
+  async function loadGroups() {
+    const res  = await fetch(`/api/satellite-groups?page=${currentPage}&limit=${LIMIT}`);
+    const data = await res.json();
+    document.getElementById('group-count').textContent = `${data.total} group${data.total !== 1 ? 's' : ''}`;
+    const cn = c => c
+      ? `<button class="contact-link" onclick="showMember('${c._id}')">${esc(c.lastName)}, ${esc(c.firstName)}</button>`
+      : '&mdash;';
+    document.getElementById('group-tbody').innerHTML = data.groups.map(g => `
+      <tr>
+        <td>${esc(g.groupName)}</td>
+        <td>${esc(g.addressLine1)}${g.addressLine2 ? '<br><small>'+esc(g.addressLine2)+'</small>' : ''}</td>
+        <td>${esc(g.city)}</td><td>${esc(g.state)}</td><td>${esc(g.postalZip)}</td>
+        <td>${cn(g.primaryContact)}</td><td>${cn(g.secondaryContact)}</td><td>${cn(g.tertiaryContact)}</td>
+        <td class="actions">
+          <button onclick="openEditModal(${JSON.stringify(g).replaceAll('"','&quot;')})">Edit</button>
+          <button class="del" onclick="deleteGroup('${g._id}','${esc(g.groupName)}')">Delete</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:1.5rem">No groups found</td></tr>';
+
+    const totalPages = Math.ceil(data.total / LIMIT) || 1;
+    document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('btn-prev').disabled = currentPage <= 1;
+    document.getElementById('btn-next').disabled = currentPage >= totalPages;
+  }
+
+  function goPage(delta) { currentPage += delta; loadGroups(); }
+
+  // ── Modal ─────────────────────────────────────────────────────────────────
+  function openCreateModal() {
+    document.getElementById('modal-title').textContent = 'Add Satellite Group';
+    document.getElementById('group-form').reset();
+    document.getElementById('form-id').value = '';
+    REF_FIELDS.forEach(clearContact);
+    document.getElementById('modal-backdrop').classList.add('open');
+  }
+
+  function openEditModal(g) {
+    document.getElementById('modal-title').textContent = 'Edit Satellite Group';
+    document.getElementById('form-id').value = g._id;
+    TEXT_FIELDS.forEach(f => document.getElementById('form-' + f).value = g[f] ?? '');
+    REF_FIELDS.forEach(f => {
+      clearContact(f);
+      const c = g[f];
+      if (c && c._id) setContact(f, c._id, `${c.lastName}, ${c.firstName}`);
+    });
+    document.getElementById('modal-backdrop').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+    REF_FIELDS.forEach(closeResults);
+  }
+
+  function onBackdropClick(e) {
+    if (e.target === document.getElementById('modal-backdrop')) closeModal();
+  }
+
+  async function submitForm(e) {
+    e.preventDefault();
+    const id   = document.getElementById('form-id').value;
+    const body = {};
+    TEXT_FIELDS.forEach(f => body[f] = document.getElementById('form-' + f).value);
+    REF_FIELDS.forEach(f => body[f] = widgetState[f].id || null);
+    const url    = id ? `/api/satellite-groups/${id}` : '/api/satellite-groups';
+    const method = id ? 'PATCH' : 'POST';
+    const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    if (!res.ok) { const err = await res.json(); alert(err.error); return; }
+    closeModal();
+    loadGroups();
+  }
+
+  async function deleteGroup(id, name) {
+    if (!confirm(`Delete group "${name}"?`)) return;
+    await fetch(`/api/satellite-groups/${id}`, { method:'DELETE' });
+    loadGroups();
+  }
+
+  // ── Member flyout ─────────────────────────────────────────────────────────
+  async function showMember(id) {
+    document.getElementById('flyout-name').textContent = 'Loading\u2026';
+    document.getElementById('flyout-body').innerHTML = '';
+    document.getElementById('flyout-backdrop').classList.add('open');
+    document.getElementById('member-flyout').classList.add('open');
+    const res = await fetch(`/api/members/${id}`);
+    if (!res.ok) {
+      document.getElementById('flyout-body').innerHTML = '<p style="color:#c62828">Could not load member.</p>';
+      return;
+    }
+    const m = await res.json();
+    document.getElementById('flyout-name').textContent = `${m.lastName}, ${m.firstName}`;
+    const row = (lbl, val) => val
+      ? `<div class="flyout-row"><span class="lbl">${esc(lbl)}</span><span class="val">${esc(String(val))}</span></div>`
+      : '';
+    const bool = v => v ? 'Yes' : 'No';
+    document.getElementById('flyout-body').innerHTML =
+      `<div class="flyout-section">
+        <h4>Address</h4>
+        ${row('Address', m.addressLine1)}
+        ${m.addressLine2 ? row('', m.addressLine2) : ''}
+        ${row('City / State / ZIP', [m.city, m.state, m.postalZip].filter(Boolean).join(', '))}
+      </div>
+      <div class="flyout-section">
+        <h4>Contact</h4>
+        ${row('Primary Phone', m.primaryPhone)}
+        ${row('Secondary Phone', m.secondaryPhone)}
+        ${row('Tertiary Phone', m.tertiaryPhone)}
+        ${row('Email', m.emailAddress)}
+        ${row('Satellite Home', m.satelliteHome)}
+      </div>
+      <div class="flyout-section">
+        <h4>Membership</h4>
+        ${row('Recurring', bool(m.recurringMember))}
+        ${m.renewalDate ? row('Renewal Date', new Date(m.renewalDate).toLocaleDateString()) : ''}
+        ${row('Membership List', bool(m.membership_list))}
+        ${row('Mailing List', bool(m.mailing_list))}
+        ${row('Email News', bool(m.email_news))}
+        ${row('Hide Email', bool(m.hide_email))}
+      </div>`;
+  }
+
+  function closeFlyout() {
+    document.getElementById('flyout-backdrop').classList.remove('open');
+    document.getElementById('member-flyout').classList.remove('open');
+  }
+
+  // Init
+  REF_FIELDS.forEach(buildWidget);
+  updateSortHeaders();
+  loadGroups();
+</script>
+</body>
+</html>
