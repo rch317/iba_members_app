@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"},{"v":{"$numberInt":"2"},"key":{"emailAddress":{"$numberInt":"1"}},"name":"emailAddress_1","background":true,"unique":true,"sparse":true}],"uuid":"7aba2057c7a04e979f13636fbdfc211a","collectionName":"iba_members","type":"collection"}
