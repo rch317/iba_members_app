@@ -21,11 +21,11 @@
         { "name": "PORT",      "value": "8080" }
       ],
       "secrets": [
-        { "name": "MONGO_URI",             "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership/MONGO_URI" },
-        { "name": "GOOGLE_CLIENT_ID",      "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership/GOOGLE_CLIENT_ID" },
-        { "name": "GOOGLE_CLIENT_SECRET",  "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership/GOOGLE_CLIENT_SECRET" },
-        { "name": "GOOGLE_CALLBACK_URL",   "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership/GOOGLE_CALLBACK_URL" },
-        { "name": "SESSION_SECRET",        "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership/SESSION_SECRET" }
+        { "name": "MONGO_URI",            "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:MONGO_URI::" },
+        { "name": "GOOGLE_CLIENT_ID",     "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:GOOGLE_CLIENT_ID::" },
+        { "name": "GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:GOOGLE_CLIENT_SECRET::" },
+        { "name": "GOOGLE_CALLBACK_URL",  "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:GOOGLE_CALLBACK_URL::" },
+        { "name": "SESSION_SECRET",       "valueFrom": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:iba-membership:SESSION_SECRET::" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
