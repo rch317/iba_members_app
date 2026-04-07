@@ -1,0 +1,12 @@
+.git/
+.gitignore
+.devcontainer/
+.vscode/
+.env
+.secrets/
+node_modules/
+data/
+scripts/
+*.md
+*.log
+npm-debug.log*
