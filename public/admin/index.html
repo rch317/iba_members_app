@@ -69,6 +69,7 @@
 
 <div class="stats">
   <div class="stat-card"><div class="label">Total Members</div><div class="value" id="stat-total">—</div></div>
+  <div class="stat-card"><div class="label">Active (not expired)</div><div class="value" id="stat-active">—</div></div>
   <div class="stat-card"><div class="label">Recurring</div><div class="value" id="stat-recurring">—</div></div>
   <div class="stat-card"><div class="label">Membership List</div><div class="value" id="stat-membership">—</div></div>
   <div class="stat-card"><div class="label">Mailing List</div><div class="value" id="stat-mailing">—</div></div>
@@ -76,6 +77,11 @@
 </div>
 
 <div class="toolbar">
+  <select id="filter-active">
+    <option value="">All members</option>
+    <option value="true">Active (not expired)</option>
+    <option value="false">Expired only</option>
+  </select>
   <select id="filter-recurring">
     <option value="">All members</option>
     <option value="true">Recurring only</option>
@@ -169,10 +175,11 @@
   async function loadStats() {
     const res = await fetch('/api/members/stats');
     const d = await res.json();
-    document.getElementById('stat-total').textContent     = d.total;
-    document.getElementById('stat-recurring').textContent = d.recurring;
+    document.getElementById('stat-total').textContent      = d.total;
+    document.getElementById('stat-active').textContent     = d.activeMembers;
+    document.getElementById('stat-recurring').textContent  = d.recurring;
     document.getElementById('stat-membership').textContent = d.membershipList;
-    document.getElementById('stat-mailing').textContent   = d.mailingList;
+    document.getElementById('stat-mailing').textContent    = d.mailingList;
     document.getElementById('stat-email-news').textContent = d.emailNews;
   }
 
@@ -230,9 +237,12 @@
 
   function applyFilters() {
     currentFilters = {};
-    const r = document.getElementById('filter-recurring').value;
-    const m = document.getElementById('filter-membership').value;
+    const a  = document.getElementById('filter-active').value;
+    const r  = document.getElementById('filter-recurring').value;
+    const m  = document.getElementById('filter-membership').value;
     const ml = document.getElementById('filter-mailing').value;
+    if (a  === 'true')  currentFilters.renewalDate_gte = 'today';
+    if (a  === 'false') currentFilters.renewalDate_lt  = 'today';
     if (r  !== '') currentFilters.recurringMember = r;
     if (m  !== '') currentFilters.membership_list  = m;
     if (ml !== '') currentFilters.mailing_list     = ml;

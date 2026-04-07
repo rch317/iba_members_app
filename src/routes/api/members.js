@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   searchMembers,
   mailingListActive,
+  activeMembers,
   listMembers,
   getMember,
   createMember,
@@ -17,6 +18,7 @@ const wrap = (fn) => (req, res, next) =>
 router.get('/search', wrap(searchMembers));
 router.get('/stats', wrap(getStats));
 router.get('/mailing-active', wrap(mailingListActive));
+router.get('/active', wrap(activeMembers));
 router.get('/', wrap(listMembers));
 router.get('/:id', wrap(getMember));
 router.post('/', wrap(createMember));

@@ -34,11 +34,14 @@ async function searchMembers(req, res) {
 const MEMBER_SORT_FIELDS = new Set(['lastName', 'firstName', 'emailAddress', 'city', 'state', 'recurringMember', 'renewalDate']);
 
 async function listMembers(req, res) {
-  const { recurringMember, membership_list, mailing_list, page = 1, limit = 20, sortField = 'lastName', sortDir = '1' } = req.query;
+  const { recurringMember, membership_list, mailing_list, renewalDate_gte, renewalDate_lt,
+          page = 1, limit = 20, sortField = 'lastName', sortDir = '1' } = req.query;
   const filter = {};
   if (recurringMember !== undefined) filter.recurringMember = recurringMember === 'true';
   if (membership_list  !== undefined) filter.membership_list  = membership_list  === 'true';
   if (mailing_list     !== undefined) filter.mailing_list     = mailing_list     === 'true';
+  if (renewalDate_gte === 'today') filter.renewalDate = { $gte: new Date() };
+  if (renewalDate_lt  === 'today') filter.renewalDate = { $lt:  new Date() };
 
   const field = MEMBER_SORT_FIELDS.has(sortField) ? sortField : 'lastName';
   const dir   = Number(sortDir) >= 0 ? 1 : -1;
@@ -92,14 +95,33 @@ async function deleteMember(req, res) {
 
 // GET /api/members/stats
 async function getStats(req, res) {
-  const [total, recurring, membershipList, mailingList, emailNews] = await Promise.all([
+  const [total, recurring, membershipList, mailingList, emailNews, activeMembers] = await Promise.all([
     Member.countDocuments(),
     Member.countDocuments({ recurringMember: true }),
     Member.countDocuments({ membership_list: true }),
     Member.countDocuments({ mailing_list: true }),
     Member.countDocuments({ email_news: true }),
+    Member.countDocuments({ renewalDate: { $gte: new Date() } }),
   ]);
-  res.json({ total, recurring, membershipList, mailingList, emailNews });
+  res.json({ total, recurring, membershipList, mailingList, emailNews, activeMembers });
 }
 
-module.exports = { searchMembers, mailingListActive, listMembers, getMember, createMember, updateMember, deleteMember, getStats };
+// GET /api/members/active  — members with renewalDate >= today
+async function activeMembers(req, res) {
+  const { page = 1, limit = 20, sortField = 'lastName', sortDir = '1' } = req.query;
+
+  const filter = { renewalDate: { $gte: new Date() } };
+  const field = MEMBER_SORT_FIELDS.has(sortField) ? sortField : 'lastName';
+  const dir   = Number(sortDir) >= 0 ? 1 : -1;
+  const sortObj = { [field]: dir };
+  if (field !== 'lastName') sortObj.lastName = 1;
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const [members, total] = await Promise.all([
+    Member.find(filter).skip(skip).limit(Number(limit)).sort(sortObj),
+    Member.countDocuments(filter),
+  ]);
+  res.json({ total, page: Number(page), limit: Number(limit), members });
+}
+
+module.exports = { searchMembers, mailingListActive, activeMembers, listMembers, getMember, createMember, updateMember, deleteMember, getStats };
