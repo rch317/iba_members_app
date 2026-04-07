@@ -142,6 +142,10 @@ async function main() {
     // Skip completely empty rows
     if (!doc.lastName && !doc.firstName) continue;
 
+    // Ensure required fields have a value
+    if (!doc.firstName) doc.firstName = 'UNKNOWN';
+    if (!doc.lastName)  doc.lastName  = 'UNKNOWN';
+
     if (DRY_RUN) {
       console.log(`[DRY RUN] Row ${i + 2}:`, JSON.stringify(doc));
       continue;
