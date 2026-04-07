@@ -222,9 +222,27 @@
     });
   });
 
+  // ── Sort ──────────────────────────────────────────────────────────────────
+  function setSort(field) {
+    if (sortField === field) { sortDir = sortDir === 1 ? -1 : 1; }
+    else { sortField = field; sortDir = 1; }
+    currentPage = 1;
+    updateSortHeaders();
+    loadGroups();
+  }
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('sort-asc','sort-desc');
+      const field = th.getAttribute('onclick').replace("setSort('","").replace("')","");
+      if (field === sortField) th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    });
+  }
+
   // ── Table ─────────────────────────────────────────────────────────────────
   async function loadGroups() {
-    const res  = await fetch(`/api/satellite-groups?page=${currentPage}&limit=${LIMIT}`);
+    const params = new URLSearchParams({ page: currentPage, limit: LIMIT, sortField, sortDir });
+    const res  = await fetch('/api/satellite-groups?' + params);
     const data = await res.json();
     document.getElementById('group-count').textContent = `${data.total} group${data.total !== 1 ? 's' : ''}`;
     const cn = c => c
