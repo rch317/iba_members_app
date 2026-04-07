@@ -23,8 +23,12 @@ echo "================================================================"
 # --- System packages ---------------------------------------------------------
 echo ""
 echo ">> Installing system packages..."
-sudo dnf update -y -q
-sudo dnf install -y -q git nginx certbot python3-certbot-nginx
+sudo yum update -y -q
+sudo yum install -y -q git
+
+# nginx and certbot via amazon-linux-extras on AL2
+sudo amazon-linux-extras enable nginx1 epel -y
+sudo yum install -y -q nginx certbot python2-certbot-nginx
 
 # --- Node.js via nvm ---------------------------------------------------------
 echo ""
