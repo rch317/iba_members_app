@@ -16,9 +16,21 @@ app.get('/health', (req, res) => {
   // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
   const db = ['disconnected', 'connected', 'connecting', 'disconnecting'][dbState] ?? 'unknown';
   const ok = dbState === 1;
+
+  // Build a safe connection string — strip credentials before exposing
+  const rawUri = process.env.MONGO_URI || 'mongodb://db:27017/membership';
+  let dbHost = rawUri;
+  try {
+    const u = new URL(rawUri);
+    u.password = '';
+    u.username = '';
+    dbHost = u.toString();
+  } catch (_) { /* not a valid URL, show as-is */ }
+
   res.status(ok ? 200 : 503).json({
     status: ok ? 'ok' : 'degraded',
     db,
+    dbHost,
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
   });
