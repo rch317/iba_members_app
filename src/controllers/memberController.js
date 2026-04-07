@@ -7,6 +7,17 @@ const ALLOWED_FIELDS = [
   'mailing_list', 'email_news', 'hide_email',
 ];
 
+const MAILING_PROJECTION = 'firstName lastName addressLine1 addressLine2 city state postalZip';
+
+// GET /api/members/mailing-active  — active mailing list (renewalDate > today AND mailing_list = true)
+async function mailingListActive(req, res) {
+  const members = await Member.find(
+    { mailing_list: true, renewalDate: { $gt: new Date() } },
+    MAILING_PROJECTION
+  ).sort({ lastName: 1, firstName: 1 });
+  res.json({ total: members.length, members });
+}
+
 // GET /api/members/search?q=smith  — lightweight name search for autocomplete
 async function searchMembers(req, res) {
   const q = String(req.query.q || '').trim();
@@ -91,4 +102,4 @@ async function getStats(req, res) {
   res.json({ total, recurring, membershipList, mailingList, emailNews });
 }
 
-module.exports = { searchMembers, listMembers, getMember, createMember, updateMember, deleteMember, getStats };
+module.exports = { searchMembers, mailingListActive, listMembers, getMember, createMember, updateMember, deleteMember, getStats };
