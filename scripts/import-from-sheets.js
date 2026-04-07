@@ -165,8 +165,21 @@ async function main() {
         inserted++;
       }
     } catch (err) {
-      console.error(`  Row ${i + 2} error (${doc.firstName} ${doc.lastName}): ${err.message}`);
-      errored++;
+      // Duplicate email — retry with prefixed address so the record still gets imported
+      if (err.code === 11000 && err.keyPattern && err.keyPattern.emailAddress && doc.emailAddress) {
+        try {
+          doc.emailAddress = `duplicate_${doc.emailAddress}`;
+          await Member.create(doc);
+          console.warn(`  Row ${i + 2} (${doc.firstName} ${doc.lastName}): duplicate email — saved as "${doc.emailAddress}"`);
+          inserted++;
+        } catch (retryErr) {
+          console.error(`  Row ${i + 2} retry error (${doc.firstName} ${doc.lastName}): ${retryErr.message}`);
+          errored++;
+        }
+      } else {
+        console.error(`  Row ${i + 2} error (${doc.firstName} ${doc.lastName}): ${err.message}`);
+        errored++;
+      }
     }
   }
 
