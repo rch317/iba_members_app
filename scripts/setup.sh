@@ -143,6 +143,12 @@ sudo env PATH="$PATH:$NODE_BIN" pm2 startup systemd -u ec2-user --hp /home/ec2-u
 # --- nginx reverse proxy -----------------------------------------------------
 echo ""
 echo ">> Configuring nginx..."
+
+# Remove default server block from nginx.conf if present (conflicts with our config)
+sudo sed -i '/^    server {/,/^    }$/d' /etc/nginx/nginx.conf
+
+# Remove default.conf if it exists
+sudo rm -f /etc/nginx/conf.d/default.conf
 sudo tee /etc/nginx/conf.d/iba-membership.conf > /dev/null <<NGINX
 server {
     listen 80;
