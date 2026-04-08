@@ -13,7 +13,7 @@ set -euo pipefail
 
 REPO_URL="git@github.com:rch317/iba_members_app.git"
 APP_DIR="/home/ec2-user/app"
-NODE_VERSION="18"
+NODE_VERSION="24"
 APP_PORT="3001"
 
 echo "================================================================"
@@ -23,12 +23,8 @@ echo "================================================================"
 # --- System packages ---------------------------------------------------------
 echo ""
 echo ">> Installing system packages..."
-sudo yum update -y -q
-sudo yum install -y -q git
-
-# nginx and certbot via amazon-linux-extras on AL2
-sudo amazon-linux-extras enable nginx1 epel -y
-sudo yum install -y -q nginx certbot python2-certbot-nginx
+sudo dnf update -y -q
+sudo dnf install -y -q git nginx certbot python3-certbot-nginx
 
 # --- Node.js via nvm ---------------------------------------------------------
 echo ""
