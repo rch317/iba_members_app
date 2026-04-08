@@ -47,6 +47,31 @@ echo ""
 echo ">> Installing PM2..."
 npm install -g pm2 --silent
 
+# --- GitHub SSH deploy key ---------------------------------------------------
+echo ""
+if [[ ! -f "$HOME/.ssh/id_ed25519" ]]; then
+  echo ">> Generating SSH key for GitHub deploy access..."
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -N "" -C "ec2-iba-membership"
+fi
+
+# Pre-trust GitHub's host key so git clone doesn't prompt
+ssh-keyscan -t ed25519 github.com >> "$HOME/.ssh/known_hosts" 2>/dev/null
+
+echo ""
+echo "================================================================"
+echo " ACTION REQUIRED — Add this deploy key to GitHub:"
+echo ""
+cat "$HOME/.ssh/id_ed25519.pub"
+echo ""
+echo " 1. Go to: https://github.com/rch317/iba_members_app/settings/keys"
+echo " 2. Click 'Add deploy key'"
+echo " 3. Paste the key above (read-only is fine)"
+echo " 4. Press Enter here to continue..."
+echo "================================================================"
+read -r
+
 # --- Clone / update repo -----------------------------------------------------
 echo ""
 if [[ -d "$APP_DIR/.git" ]]; then
