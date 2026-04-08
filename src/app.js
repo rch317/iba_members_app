@@ -39,6 +39,11 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/login.html'));
 });
 
+// Public roster page
+app.get('/roster', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/roster.html'));
+});
+
 // Apply auth to everything below this line
 app.use(requireAuth);
 

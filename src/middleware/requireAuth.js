@@ -10,6 +10,7 @@ const PUBLIC_ROUTES = [
   '/login',
   '/auth',           // /auth/google, /auth/google/callback, /auth/logout
   '/api/members/roster',
+  '/roster',
 ];
 
 /**

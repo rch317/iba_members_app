@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IBA Member Roster</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #222; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 1.25rem; }
+    header .count { font-size: .9rem; color: #aab4c8; }
+    .toolbar { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 2rem; flex-wrap: wrap; }
+    .toolbar input { padding: .45rem .75rem; border-radius: 6px; border: 1px solid #ccc; font-size: .9rem; width: 240px; }
+    .toolbar label { font-size: .9rem; color: #555; display: flex; align-items: center; gap: .4rem; }
+    .table-wrap { overflow-x: auto; margin: 0 2rem 2rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th { background: #1a1a2e; color: #fff; text-align: left; padding: .6rem 1rem; font-size: .78rem; text-transform: uppercase; white-space: nowrap; cursor: pointer; user-select: none; }
+    th:hover { background: #2e2e5e; }
+    th.sort-asc::after  { content: ' \25B2'; font-size: .65rem; }
+    th.sort-desc::after { content: ' \25BC'; font-size: .65rem; }
+    td { padding: .55rem 1rem; border-bottom: 1px solid #f0f0f0; font-size: .88rem; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    td.expired { color: #c62828; }
+    td.active  { color: #388e3c; font-weight: 600; }
+    .empty { padding: 2rem; text-align: center; color: #888; background: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>IBA Member Roster</h1>
+    <span class="count" id="count"></span>
+  </header>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="Filter by name…" />
+    <label>
+      <input type="checkbox" id="activeOnly" />
+      Active members only
+    </label>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="lastName">Last Name</th>
+          <th data-col="firstName">First Name</th>
+          <th data-col="renewalDate">Renewal Date</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    let allMembers = [];
+    let sortCol = 'lastName';
+    let sortDir = 1;
+
+    async function load() {
+      const res = await fetch('/api/members/roster');
+      const data = await res.json();
+      allMembers = data.members;
+      render();
+    }
+
+    function render() {
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const activeOnly = document.getElementById('activeOnly').checked;
+      const today = new Date();
+
+      let rows = allMembers.filter(m => {
+        if (activeOnly && new Date(m.renewalDate) < today) return false;
+        if (q) {
+          const name = `${m.firstName} ${m.lastName}`.toLowerCase();
+          if (!name.includes(q)) return false;
+        }
+        return true;
+      });
+
+      rows.sort((a, b) => {
+        let va = a[sortCol] || '';
+        let vb = b[sortCol] || '';
+        if (sortCol === 'renewalDate') {
+          va = new Date(va);
+          vb = new Date(vb);
+        }
+        return va < vb ? -sortDir : va > vb ? sortDir : 0;
+      });
+
+      document.getElementById('count').textContent = `${rows.length} member${rows.length !== 1 ? 's' : ''}`;
+
+      const tbody = document.getElementById('tbody');
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">No members found.</td></tr>';
+        return;
+      }
+
+      const today2 = new Date();
+      tbody.innerHTML = rows.map(m => {
+        const d = m.renewalDate ? new Date(m.renewalDate) : null;
+        const dateStr = d ? d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+        const cls = !d ? '' : d >= today2 ? 'active' : 'expired';
+        return `<tr>
+          <td>${m.lastName || '—'}</td>
+          <td>${m.firstName || '—'}</td>
+          <td class="${cls}">${dateStr}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Sort on header click
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) { sortDir *= -1; }
+        else { sortCol = col; sortDir = 1; }
+        document.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+        th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+        render();
+      });
+    });
+
+    document.getElementById('search').addEventListener('input', render);
+    document.getElementById('activeOnly').addEventListener('change', render);
+
+    load();
+  </script>
+</body>
+</html>
