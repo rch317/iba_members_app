@@ -4,6 +4,7 @@ const {
   searchMembers,
   mailingListActive,
   activeMembers,
+  memberRoster,
   listMembers,
   getMember,
   createMember,
@@ -19,6 +20,7 @@ router.get('/search', wrap(searchMembers));
 router.get('/stats', wrap(getStats));
 router.get('/mailing-active', wrap(mailingListActive));
 router.get('/active', wrap(activeMembers));
+router.get('/roster', wrap(memberRoster));
 router.get('/', wrap(listMembers));
 router.get('/:id', wrap(getMember));
 router.post('/', wrap(createMember));

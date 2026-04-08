@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   '/health',
   '/login',
   '/auth',           // /auth/google, /auth/google/callback, /auth/logout
+  '/api/members/roster',
 ];
 
 /**

@@ -18,6 +18,15 @@ async function mailingListActive(req, res) {
   res.json({ total: members.length, members });
 }
 
+// GET /api/members/roster  — public list of member names and renewal dates
+async function memberRoster(req, res) {
+  const members = await Member.find(
+    {},
+    'firstName lastName renewalDate'
+  ).sort({ lastName: 1, firstName: 1 });
+  res.json({ total: members.length, members });
+}
+
 // GET /api/members/search?q=smith  — lightweight name search for autocomplete
 async function searchMembers(req, res) {
   const q = String(req.query.q || '').trim();
@@ -124,4 +133,4 @@ async function activeMembers(req, res) {
   res.json({ total, page: Number(page), limit: Number(limit), members });
 }
 
-module.exports = { searchMembers, mailingListActive, activeMembers, listMembers, getMember, createMember, updateMember, deleteMember, getStats };
+module.exports = { searchMembers, mailingListActive, activeMembers, memberRoster, listMembers, getMember, createMember, updateMember, deleteMember, getStats };
