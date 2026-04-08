@@ -18,10 +18,10 @@ async function mailingListActive(req, res) {
   res.json({ total: members.length, members });
 }
 
-// GET /api/members/roster  — public list of member names and renewal dates
+// GET /api/members/roster  — public list of active member names and renewal dates
 async function memberRoster(req, res) {
   const members = await Member.find(
-    {},
+    { renewalDate: { $gte: new Date() } },
     'firstName lastName renewalDate'
   ).sort({ lastName: 1, firstName: 1 });
   res.json({ total: members.length, members });

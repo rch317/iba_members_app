@@ -34,10 +34,6 @@
 
   <div class="toolbar">
     <input type="text" id="search" placeholder="Filter by name…" />
-    <label>
-      <input type="checkbox" id="activeOnly" />
-      Active members only
-    </label>
   </div>
 
   <div class="table-wrap">
@@ -67,11 +63,9 @@
 
     function render() {
       const q = document.getElementById('search').value.trim().toLowerCase();
-      const activeOnly = document.getElementById('activeOnly').checked;
       const today = new Date();
 
       let rows = allMembers.filter(m => {
-        if (activeOnly && new Date(m.renewalDate) < today) return false;
         if (q) {
           const name = `${m.firstName} ${m.lastName}`.toLowerCase();
           if (!name.includes(q)) return false;
@@ -123,7 +117,6 @@
     });
 
     document.getElementById('search').addEventListener('input', render);
-    document.getElementById('activeOnly').addEventListener('change', render);
 
     load();
   </script>
