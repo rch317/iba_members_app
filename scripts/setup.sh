@@ -144,11 +144,33 @@ sudo env PATH="$PATH:$NODE_BIN" pm2 startup systemd -u ec2-user --hp /home/ec2-u
 echo ""
 echo ">> Configuring nginx..."
 
-# Remove default server block from nginx.conf if present (conflicts with our config)
-sudo sed -i '/^    server {/,/^    }$/d' /etc/nginx/nginx.conf
+# Write a clean minimal nginx.conf — avoids conflicts with the default server block
+sudo tee /etc/nginx/nginx.conf > /dev/null <<'NGINXMAIN'
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log notice;
+pid /run/nginx.pid;
 
-# Remove default.conf if it exists
-sudo rm -f /etc/nginx/conf.d/default.conf
+include /usr/share/nginx/modules/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+    access_log  /var/log/nginx/access.log  main;
+    sendfile            on;
+    tcp_nopush          on;
+    keepalive_timeout   65;
+    types_hash_max_size 4096;
+    include             /etc/nginx/mime.types;
+    default_type        application/octet-stream;
+    include /etc/nginx/conf.d/*.conf;
+}
+NGINXMAIN
 sudo tee /etc/nginx/conf.d/iba-membership.conf > /dev/null <<NGINX
 server {
     listen 80;
