@@ -5,10 +5,22 @@ created: 2026-04-07
 
 # IBA Membership App — API Reference
 
-Base URL: `http://localhost:3001`
+Base URL (local): `http://localhost:3001`  
+Base URL (production): `http://iba-membership-lb-2018470141.us-east-1.elb.amazonaws.com`
 
 All request bodies use `Content-Type: application/json`.  
 All responses are JSON. Errors return `{ "error": "message" }`.
+
+### Authentication
+
+Most endpoints require authentication. Two methods are supported:
+
+| Method | How | Use case |
+|---|---|---|
+| Google OAuth session | Sign in at `/login` | Browser access |
+| API key | `X-API-Key: <key>` header | Programmatic access |
+
+**Public endpoints** (no auth required): `/health`, `/login`, `/auth/*`, `/roster`, `/api/members/roster`
 
 ---
 
@@ -88,6 +100,26 @@ Summary counts across the full member collection.
 Paginated, sortable list of members whose `renewalDate >= today`. Accepts the same `page`, `limit`, `sortField`, and `sortDir` params as `GET /api/members`.
 
 **Response** — same shape as `GET /api/members`.
+
+---
+
+### `GET /api/members/roster` ⚡ public
+Active members only (`renewalDate >= today`). Returns name and renewal date fields only. No authentication required.
+
+**Response**
+```json
+{
+  "total": 178,
+  "members": [
+    {
+      "_id": "...",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "renewalDate": "2026-06-01T00:00:00.000Z"
+    }
+  ]
+}
+```
 
 ---
 
@@ -256,6 +288,38 @@ Delete a group permanently.
 { "message": "Satellite group deleted" }
 ```
 Returns `404` if not found.
+
+---
+
+## Auth
+
+### `GET /auth/google`
+Initiates Google OAuth flow. Redirects the browser to Google's consent screen.
+
+---
+
+### `GET /auth/google/callback`
+OAuth callback URL. On success redirects to `/admin`; on failure redirects to `/login?error=access_denied`.
+
+---
+
+### `GET /auth/logout`
+Destroys the current session and redirects to `/login`.
+
+---
+
+### `GET /auth/me`
+Returns the currently authenticated user. Requires active session or API key.
+
+**Response**
+```json
+{
+  "_id": "...",
+  "email": "rob.hough@gmail.com",
+  "displayName": "Rob Hough",
+  "hasApiKey": true
+}
+```
 
 ---
 
