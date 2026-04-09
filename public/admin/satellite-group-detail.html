@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Satellite Group</title>
+  <link rel="stylesheet" href="/admin/admin.css" />
+</head>
+<body>
+<header>
+  <h1>Membership Admin</h1>
+  <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+</header>
+<nav>
+  <a href="/admin">Members</a>
+  <div class="nav-dropdown">
+    <a href="/admin/satellite-groups" class="active">Satellite Groups</a>
+    <div class="nav-dropdown-menu" id="sat-nav"></div>
+  </div>
+  <a href="/admin/mailing-active">Active Mailing List</a>
+</nav>
+
+<!-- Group info banner -->
+<div class="toolbar" style="flex-direction:column;align-items:flex-start;gap:.35rem">
+  <h2 id="group-title" style="font-size:1.15rem;font-weight:700"></h2>
+  <div id="group-meta" style="font-size:.85rem;color:var(--text-muted);display:flex;gap:1.5rem;flex-wrap:wrap"></div>
+</div>
+
+<!-- Members table -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th class="sortable" data-field="lastName">Last Name</th>
+        <th class="sortable" data-field="firstName">First Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th class="sortable" data-field="city">City</th>
+        <th class="sortable" data-field="state">State</th>
+        <th class="sortable" data-field="renewalDate">Renewal Date</th>
+        <th>Active</th>
+      </tr>
+    </thead>
+    <tbody id="member-tbody"></tbody>
+  </table>
+</div>
+
+<div class="pagination">
+  <button id="btn-prev" onclick="changePage(-1)">← Prev</button>
+  <span id="page-info"></span>
+  <button id="btn-next" onclick="changePage(1)">Next →</button>
+</div>
+
+<script>
+  const groupId = location.pathname.split('/').pop();
+  let currentPage = 1;
+  const LIMIT = 50;
+  let sortField = 'lastName';
+  let sortDir = 1;
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Load group info ────────────────────────── */
+  async function loadGroupInfo() {
+    const res = await fetch(`/api/satellite-groups/${groupId}`);
+    if (!res.ok) { document.getElementById('group-title').textContent = 'Group not found'; return; }
+    const g = await res.json();
+    document.title = `${g.groupName} — Satellite Group`;
+    document.getElementById('group-title').textContent = `${g.groupName}`;
+    const parts = [];
+    if (g.satelliteID) parts.push(`<strong>ID:</strong> ${esc(g.satelliteID)}`);
+    if (g.city || g.state) parts.push(`<strong>Location:</strong> ${esc([g.city, g.state].filter(Boolean).join(', '))}`);
+    const contactName = c => c ? `${c.firstName} ${c.lastName}` : null;
+    const pc = contactName(g.primaryContact);
+    if (pc) parts.push(`<strong>Primary Contact:</strong> ${esc(pc)}`);
+    document.getElementById('group-meta').innerHTML = parts.map(p => `<span>${p}</span>`).join('');
+  }
+
+  /* ── Load members ───────────────────────────── */
+  async function loadMembers() {
+    const params = new URLSearchParams({
+      page: currentPage, limit: LIMIT, sortField, sortDir,
+    });
+    const res = await fetch(`/api/satellite-groups/${groupId}/members?${params}`);
+    const data = await res.json();
+    const today = new Date().toISOString().slice(0,10);
+
+    document.getElementById('member-tbody').innerHTML = data.members.map(m => {
+      const rd = m.renewalDate ? m.renewalDate.slice(0,10) : '';
+      const active = rd >= today;
+      return `<tr>
+        <td>${esc(m.lastName)}</td>
+        <td>${esc(m.firstName)}</td>
+        <td>${m.emailAddress ? `<a href="mailto:${esc(m.emailAddress)}">${esc(m.emailAddress)}</a>` : '—'}</td>
+        <td>${esc(m.primaryPhone) || '—'}</td>
+        <td>${esc(m.city)}</td>
+        <td>${esc(m.state)}</td>
+        <td>${rd}</td>
+        <td style="color:${active ? 'var(--success)' : 'var(--danger)'}">${active ? '✓' : '✗'}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="8" style="text-align:center;color:#999;padding:1.5rem">No members assigned to this group</td></tr>';
+
+    const totalPages = Math.ceil(data.total / LIMIT) || 1;
+    document.getElementById('page-info').textContent = `Page ${data.page} of ${totalPages}  (${data.total} members)`;
+    document.getElementById('btn-prev').disabled = data.page <= 1;
+    document.getElementById('btn-next').disabled = data.page >= totalPages;
+    updateSortHeaders();
+  }
+
+  function changePage(d) { currentPage += d; loadMembers(); }
+
+  /* ── Sorting ────────────────────────────────── */
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const f = th.dataset.field;
+      if (sortField === f) sortDir *= -1; else { sortField = f; sortDir = 1; }
+      currentPage = 1;
+      loadMembers();
+    });
+  });
+
+  function updateSortHeaders() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('sort-asc','sort-desc');
+      if (th.dataset.field === sortField) th.classList.add(sortDir > 0 ? 'sort-asc' : 'sort-desc');
+    });
+  }
+
+  /* ── Nav dropdown ───────────────────────────── */
+  async function loadNav() {
+    const res = await fetch('/api/satellite-groups/nav-list');
+    const groups = await res.json();
+    document.getElementById('sat-nav').innerHTML = groups.map(g =>
+      `<a href="/admin/satellite-group/${g._id}"${g._id === groupId ? ' class="active"' : ''}>${esc(g.groupName)}</a>`
+    ).join('');
+  }
+
+  /* ── Theme toggle ───────────────────────────── */
+  function toggleTheme() {
+    const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    document.getElementById('theme-btn').textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+  function initTheme() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', saved);
+    document.getElementById('theme-btn').textContent = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+
+  // Init
+  initTheme();
+  loadGroupInfo();
+  loadMembers();
+  loadNav();
+</script>
+</body>
+</html>

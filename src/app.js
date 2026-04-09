@@ -7,6 +7,8 @@ const passport   = require('./config/passport');
 const { requireAuth } = require('./middleware/requireAuth');
 const membersRouter         = require('./routes/api/members');
 const satelliteGroupsRouter = require('./routes/api/satelliteGroups');
+const notesRouter           = require('./routes/api/notes');
+const { noteCounts }        = require('./controllers/noteController');
 const adminRouter           = require('./routes/admin/dashboard');
 const authRouter            = require('./routes/auth');
 
@@ -79,6 +81,8 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/members', membersRouter);
+app.use('/api/members/:memberId/notes', notesRouter);
+app.post('/api/notes/counts', express.json(), (req, res, next) => noteCounts(req, res, next));
 app.use('/api/satellite-groups', satelliteGroupsRouter);
 
 // Admin dashboard

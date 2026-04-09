@@ -14,4 +14,8 @@ router.get('/mailing-active', (req, res) => {
   res.sendFile(path.join(__dirname, '../../../public/admin/mailing-active.html'));
 });
 
+router.get('/satellite-group/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../../public/admin/satellite-group-detail.html'));
+});
+
 module.exports = router;

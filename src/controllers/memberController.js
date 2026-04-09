@@ -43,12 +43,13 @@ async function searchMembers(req, res) {
 const MEMBER_SORT_FIELDS = new Set(['lastName', 'firstName', 'emailAddress', 'city', 'state', 'recurringMember', 'renewalDate']);
 
 async function listMembers(req, res) {
-  const { recurringMember, membership_list, mailing_list, renewalDate_gte, renewalDate_lt,
+  const { recurringMember, membership_list, mailing_list, email_news, renewalDate_gte, renewalDate_lt,
           page = 1, limit = 20, sortField = 'lastName', sortDir = '1' } = req.query;
   const filter = {};
   if (recurringMember !== undefined) filter.recurringMember = recurringMember === 'true';
   if (membership_list  !== undefined) filter.membership_list  = membership_list  === 'true';
   if (mailing_list     !== undefined) filter.mailing_list     = mailing_list     === 'true';
+  if (email_news       !== undefined) filter.email_news       = email_news       === 'true';
   if (renewalDate_gte === 'today') filter.renewalDate = { $gte: new Date() };
   if (renewalDate_lt  === 'today') filter.renewalDate = { $lt:  new Date() };
 
@@ -104,13 +105,14 @@ async function deleteMember(req, res) {
 
 // GET /api/members/stats
 async function getStats(req, res) {
+  const active = { renewalDate: { $gte: new Date() } };
   const [total, recurring, membershipList, mailingList, emailNews, activeMembers] = await Promise.all([
     Member.countDocuments(),
-    Member.countDocuments({ recurringMember: true }),
-    Member.countDocuments({ membership_list: true }),
-    Member.countDocuments({ mailing_list: true }),
-    Member.countDocuments({ email_news: true }),
-    Member.countDocuments({ renewalDate: { $gte: new Date() } }),
+    Member.countDocuments({ recurringMember: true, ...active }),
+    Member.countDocuments({ membership_list: true, ...active }),
+    Member.countDocuments({ mailing_list: true, ...active }),
+    Member.countDocuments({ email_news: true, ...active }),
+    Member.countDocuments(active),
   ]);
   res.json({ total, recurring, membershipList, mailingList, emailNews, activeMembers });
 }

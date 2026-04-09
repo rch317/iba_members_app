@@ -4,79 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Satellite Groups Admin</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #222; }
-    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; }
-    header h1 { font-size: 1.25rem; }
-    nav { background: #16213e; display: flex; gap: .25rem; padding: .5rem 2rem; }
-    nav a { color: #aab4c8; text-decoration: none; padding: .4rem .9rem; border-radius: 5px; font-size: .88rem; }
-    nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
-    nav a.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 600; }
-    .toolbar { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 2rem 1rem; flex-wrap: wrap; }
-    .toolbar button { padding: .45rem .75rem; border-radius: 6px; border: none; font-size: .9rem; background: #1a1a2e; color: #fff; cursor: pointer; }
-    .toolbar button:hover { background: #2e2e5e; }
-    .table-wrap { overflow-x: auto; margin: 0 2rem 1rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    table { width: 100%; border-collapse: collapse; background: #fff; }
-    th { background: #1a1a2e; color: #fff; text-align: left; padding: .6rem 1rem; font-size: .78rem; text-transform: uppercase; white-space: nowrap; }
-    th.sortable { cursor: pointer; user-select: none; }
-    th.sortable:hover { background: #2e2e5e; }
-    th.sort-asc::after  { content: ' \25B2'; font-size: .65rem; }
-    th.sort-desc::after { content: ' \25BC'; font-size: .65rem; }
-    td { padding: .55rem 1rem; border-bottom: 1px solid #f0f0f0; font-size: .88rem; white-space: nowrap; }
-    tr:last-child td { border-bottom: none; }
-    .actions button { background: none; border: none; cursor: pointer; font-size: .85rem; color: #1565c0; margin-right: .5rem; }
-    .actions button.del { color: #c62828; }
-    .pagination { display: flex; gap: .5rem; padding: 0 2rem 2rem; align-items: center; }
-    .pagination button { padding: .35rem .75rem; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
-    .pagination button:disabled { opacity: .4; cursor: default; }
-    .pagination span { font-size: .9rem; color: #555; }
-    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 10; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 2rem 1rem; }
-    .modal-backdrop.open { display: flex; }
-    .modal { background: #fff; border-radius: 10px; padding: 2rem; width: 560px; max-width: 100%; margin: auto; }
-    .modal h2 { margin-bottom: 1.25rem; font-size: 1.1rem; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem 1rem; }
-    .form-grid .span2 { grid-column: span 2; }
-    .modal label { display: flex; flex-direction: column; gap: .25rem; font-size: .88rem; }
-    .modal label > span { font-weight: 600; }
-    .modal input[type="text"] { padding: .42rem .6rem; border: 1px solid #ccc; border-radius: 6px; font-size: .9rem; width: 100%; }
-    .field-label { font-weight: 600; font-size: .88rem; margin-bottom: .25rem; }
-    .member-search { position: relative; }
-    .selected-badge { display: flex; align-items: center; gap: .4rem; background: #e8f0fe; border: 1px solid #c5d5f5; border-radius: 6px; padding: .32rem .6rem; font-size: .88rem; margin-bottom: .3rem; min-height: 32px; }
-    .selected-badge span { flex: 1; }
-    .selected-badge button { background: none; border: none; cursor: pointer; color: #c62828; font-size: 1rem; line-height: 1; padding: 0 .1rem; }
-    .search-input { width: 100%; }
-    .search-results { position: absolute; z-index: 20; background: #fff; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,.12); max-height: 200px; overflow-y: auto; display: none; }
-    .search-results.open { display: block; }
-    .search-results li { list-style: none; padding: .45rem .75rem; cursor: pointer; font-size: .88rem; }
-    .search-results li:hover { background: #f0f4ff; }
-    .search-results li.no-results { color: #999; cursor: default; }
-    .modal .modal-actions { display: flex; gap: .75rem; justify-content: flex-end; margin-top: 1.5rem; }
-    .modal .modal-actions button { padding: .45rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-size: .9rem; }
-    .btn-cancel { background: #f0f0f0; }
-    .btn-save   { background: #1a1a2e; color: #fff; }
-    .flyout-backdrop { display: none; position: fixed; inset: 0; z-index: 30; }
-    .flyout-backdrop.open { display: block; }
-    .flyout { position: fixed; top: 0; right: 0; height: 100%; width: 360px; max-width: 95vw; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,.15); z-index: 31; transform: translateX(100%); transition: transform .25s ease; overflow-y: auto; display: flex; flex-direction: column; }
-    .flyout.open { transform: translateX(0); }
-    .flyout-header { background: #1a1a2e; color: #fff; padding: 1rem 1.25rem; display: flex; align-items: center; gap: .75rem; }
-    .flyout-header h3 { flex: 1; font-size: 1rem; margin: 0; }
-    .flyout-header button { background: none; border: none; color: #fff; font-size: 1.25rem; cursor: pointer; line-height: 1; }
-    .flyout-body { padding: 1.25rem; flex: 1; }
-    .flyout-section { margin-bottom: 1.25rem; }
-    .flyout-section h4 { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: #888; border-bottom: 1px solid #eee; padding-bottom: .3rem; margin-bottom: .6rem; }
-    .flyout-row { display: flex; gap: .5rem; margin-bottom: .4rem; font-size: .88rem; }
-    .flyout-row .lbl { color: #666; min-width: 120px; flex-shrink: 0; }
-    .flyout-row .val { font-weight: 500; word-break: break-word; }
-    .contact-link { background: none; border: none; color: #1565c0; cursor: pointer; font-size: inherit; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
-    .contact-link:hover { color: #0d47a1; }
-  </style>
+  <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-<header><h1>Membership Admin</h1></header>
+<header>
+  <h1>Membership Admin</h1>
+  <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+</header>
 <nav>
   <a href="/admin">Members</a>
-  <a href="/admin/satellite-groups" class="active">Satellite Groups</a>
+  <div class="nav-dropdown">
+    <a href="/admin/satellite-groups" class="active">Satellite Groups</a>
+    <div class="nav-dropdown-menu" id="sat-nav"></div>
+  </div>
   <a href="/admin/mailing-active">Active Mailing List</a>
 </nav>
 
@@ -89,7 +29,9 @@
   <table>
     <thead>
       <tr>
+        <th class="sortable" onclick="setSort('satelliteID')">Satellite ID</th>
         <th class="sortable" onclick="setSort('groupName')">Group Name</th>
+        <th>Notes</th>
         <th>Address</th>
         <th class="sortable" onclick="setSort('city')">City</th>
         <th class="sortable" onclick="setSort('state')">State</th>
@@ -125,7 +67,9 @@
     <form id="group-form" onsubmit="submitForm(event)">
       <input type="hidden" id="form-id" />
       <div class="form-grid">
-        <label class="span2"><span>Group Name *</span><input type="text" id="form-groupName" required /></label>
+        <label><span>Satellite ID</span><input type="text" id="form-satelliteID" /></label>
+        <label><span>Group Name *</span><input type="text" id="form-groupName" required /></label>
+        <label class="span2"><span>Notes</span><input type="text" id="form-notes" /></label>
         <label class="span2"><span>Address Line 1</span><input type="text" id="form-addressLine1" /></label>
         <label class="span2"><span>Address Line 2</span><input type="text" id="form-addressLine2" /></label>
         <label><span>City</span><input type="text" id="form-city" /></label>
@@ -148,7 +92,7 @@
   let currentPage = 1;
   const LIMIT = 20;
   const REF_FIELDS = ['primaryContact','secondaryContact','tertiaryContact'];
-  const TEXT_FIELDS = ['groupName','addressLine1','addressLine2','city','state','postalZip'];
+  const TEXT_FIELDS = ['satelliteID','groupName','notes','addressLine1','addressLine2','city','state','postalZip'];
   const widgetState = { primaryContact:{id:null,name:''}, secondaryContact:{id:null,name:''}, tertiaryContact:{id:null,name:''} };
   const searchTimers = {};
   let sortField = 'groupName';
@@ -251,7 +195,11 @@
       : '&mdash;';
     document.getElementById('group-tbody').innerHTML = data.groups.map(g => `
       <tr>
+        <td>${esc(g.satelliteID)}</td>
         <td>${esc(g.groupName)}</td>
+        <td>${g.notes && g.notes.length > 30
+          ? `<span class="truncated-note" title="${esc(g.notes)}" onclick="alert(this.title)">${esc(g.notes.slice(0,30))}…</span>`
+          : esc(g.notes)}</td>
         <td>${esc(g.addressLine1)}${g.addressLine2 ? '<br><small>'+esc(g.addressLine2)+'</small>' : ''}</td>
         <td>${esc(g.city)}</td><td>${esc(g.state)}</td><td>${esc(g.postalZip)}</td>
         <td>${cn(g.primaryContact)}</td><td>${cn(g.secondaryContact)}</td><td>${cn(g.tertiaryContact)}</td>
@@ -259,7 +207,7 @@
           <button onclick="openEditModal(${JSON.stringify(g).replaceAll('"','&quot;')})">Edit</button>
           <button class="del" onclick="deleteGroup('${g._id}','${esc(g.groupName)}')">Delete</button>
         </td>
-      </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:#999;padding:1.5rem">No groups found</td></tr>';
+      </tr>`).join('') || '<tr><td colspan="11" style="text-align:center;color:#999;padding:1.5rem">No groups found</td></tr>';
 
     const totalPages = Math.ceil(data.total / LIMIT) || 1;
     document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
@@ -367,10 +315,30 @@
     document.getElementById('member-flyout').classList.remove('open');
   }
 
+  /* ── Theme toggle ─────────────────────────── */
+  function toggleTheme() {
+    const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    document.getElementById('theme-btn').textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+  function initTheme() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', saved);
+    document.getElementById('theme-btn').textContent = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+
   // Init
+  initTheme();
   REF_FIELDS.forEach(buildWidget);
   updateSortHeaders();
   loadGroups();
+  // Load satellite group nav dropdown
+  fetch('/api/satellite-groups/nav-list').then(r=>r.json()).then(groups=>{
+    document.getElementById('sat-nav').innerHTML = groups.map(g =>
+      `<a href="/admin/satellite-group/${g._id}">${esc(g.groupName)}</a>`
+    ).join('');
+  });
 </script>
 </body>
 </html>

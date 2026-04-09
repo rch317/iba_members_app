@@ -4,32 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Active Mailing List</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #f4f6f8; color: #222; }
-    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem; }
-    header h1 { font-size: 1.25rem; }
-    nav { background: #16213e; display: flex; gap: .25rem; padding: .5rem 2rem; }
-    nav a { color: #aab4c8; text-decoration: none; padding: .4rem .9rem; border-radius: 5px; font-size: .88rem; }
-    nav a:hover { background: rgba(255,255,255,.08); color: #fff; }
-    nav a.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 600; }
-    .toolbar { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 2rem 1rem; flex-wrap: wrap; }
-    .table-wrap { overflow-x: auto; margin: 0 2rem 1rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    table { width: 100%; border-collapse: collapse; background: #fff; }
-    th { background: #1a1a2e; color: #fff; text-align: left; padding: .6rem 1rem; font-size: .78rem; text-transform: uppercase; white-space: nowrap; }
-    th.sortable { cursor: pointer; user-select: none; }
-    th.sortable:hover { background: #2e2e5e; }
-    th.sort-asc::after  { content: ' \25B2'; font-size: .65rem; }
-    th.sort-desc::after { content: ' \25BC'; font-size: .65rem; }
-    td { padding: .55rem 1rem; border-bottom: 1px solid #f0f0f0; font-size: .88rem; white-space: nowrap; }
-    tr:last-child td { border-bottom: none; }
-  </style>
+  <link rel="stylesheet" href="/admin/admin.css" />
 </head>
 <body>
-<header><h1>Membership Admin</h1></header>
+<header>
+  <h1>Membership Admin</h1>
+  <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+</header>
 <nav>
   <a href="/admin">Members</a>
-  <a href="/admin/satellite-groups">Satellite Groups</a>
+  <div class="nav-dropdown">
+    <a href="/admin/satellite-groups">Satellite Groups</a>
+    <div class="nav-dropdown-menu" id="sat-nav"></div>
+  </div>
   <a href="/admin/mailing-active" class="active">Active Mailing List</a>
 </nav>
 
@@ -106,6 +93,25 @@
   }
 
   loadMembers();
+  // Load satellite group nav dropdown
+  fetch('/api/satellite-groups/nav-list').then(r=>r.json()).then(groups=>{
+    document.getElementById('sat-nav').innerHTML = groups.map(g =>
+      `<a href="/admin/satellite-group/${g._id}">${esc(g.groupName)}</a>`
+    ).join('');
+  });
+
+  /* ── Theme toggle ─────────────────────────── */
+  function toggleTheme() {
+    const next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    document.getElementById('theme-btn').textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+  (function initTheme() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', saved);
+    document.getElementById('theme-btn').textContent = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
+  })();
 </script>
 </body>
 </html>

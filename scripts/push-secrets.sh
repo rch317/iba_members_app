@@ -11,7 +11,7 @@
 set -euo pipefail
 
 SECRET_NAME="iba-membership"
-ENV_FILE="$(dirname "$0")/../.env"
+ENV_FILE="$(dirname "$0")/../.env.production"
 
 # Keys to include — PORT and the local mongo URI are excluded
 KEYS=(

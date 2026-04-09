@@ -25,6 +25,11 @@ const PUBLIC_ROUTES = [
  * Browser requests get redirected to /login.
  */
 async function requireAuth(req, res, next) {
+  // 0. Dev bypass — skip all auth when BYPASS_AUTH is set
+  if (process.env.BYPASS_AUTH === 'true') {
+    return next();
+  }
+
   // 1. Public whitelist
   if (PUBLIC_ROUTES.some(prefix => req.path === prefix || req.path.startsWith(prefix + '/'))) {
     return next();

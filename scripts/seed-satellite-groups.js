@@ -22,6 +22,16 @@ const cities = [
 
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+const groupNames = [
+  'Hoosier Hammersmiths', 'Crossroads Forge', 'Wabash Valley Ironworks',
+  'Circle City Anvil Club', 'Limestone Strikers', 'Prairie Fire Forge',
+  'Covered Bridge Blacksmiths', 'Calumet Ironworkers', 'Sugar Creek Smiths',
+  'Tippecanoe Forge Guild', 'Whitewater Valley Smiths', 'Cardinal Forge',
+  'Sycamore Ironworks', 'Heartland Hammer Guild', 'Bluebird Forge',
+  'Cornbelt Blacksmiths', 'Rivertown Anvil Society', 'Dunes Edge Forge',
+  'Wildcat Creek Smiths', 'Flatrock Forge Collective',
+];
+
 (async () => {
   await mongoose.connect(process.env.MONGO_URI || 'mongodb://db:27017/membership');
 
@@ -44,8 +54,10 @@ function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
   const groups = Array.from({ length: 20 }, (_, i) => {
     const [city, zip] = cities[i];
     const { primary, secondary, tertiary } = pickContacts();
+    const sid = `SAT-${String(i + 1).padStart(3, '0')}`;
     return {
-      groupName:        `Satellite ${i + 1}`,
+      satelliteID:      sid,
+      groupName:        groupNames[i],
       addressLine1:     `${Math.floor(Math.random() * 9000) + 100} ${streets[i]}`,
       city,
       state:            'IN',

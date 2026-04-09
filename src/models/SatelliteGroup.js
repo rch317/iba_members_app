@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const satelliteGroupSchema = new mongoose.Schema(
   {
+    satelliteID:      { type: String, trim: true },
     groupName:        { type: String, required: true, trim: true },
+    notes:            { type: String, trim: true },
     addressLine1:     { type: String, trim: true },
     addressLine2:     { type: String, trim: true },
     city:             { type: String, trim: true },
