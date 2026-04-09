@@ -1,8 +1,9 @@
 name: Build and Deploy to ECS
 
 on:
-  push:
-    branches: [main, master]
+  workflow_dispatch:
+  # push:
+  #   branches: [main, master]
 
 env:
   AWS_REGION:       ${{ vars.AWS_REGION }}
